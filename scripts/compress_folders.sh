@@ -36,7 +36,7 @@ while getopts ':o:d:c:h' OPTION; do
             exit 1
             ;;
         *|h)
-            echo "usage: $(basename \$0) DIR [-c compressdir] [-h] DESTINATION" >&2
+            echo "usage: $(basename \$0) [-o origin] [-c compressdir] [-h] [-d destination]" >&2
             exit 1
             ;;
         esac
