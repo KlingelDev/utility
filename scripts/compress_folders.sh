@@ -56,7 +56,7 @@ if [ ! -d $COMPDIR ]; then
 fi
 
 # Propagate deletions
-if [ $PROPOGATEDEL ]; then
+if [ $PROPOGATEDEL == 1 ]; then
     # Build 7z file list
     o_files=( $(ls $ORIGIN) )
     for i in ${!o_files[@]}
