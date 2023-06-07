@@ -96,7 +96,7 @@ done
 
 for i in $COMPDIR/*
 do
-    rsync -arptgoD --progress --checksum $i $DEST
+    rsync -arptgoD --exclude $COMPDIR --progress --checksum $i $DEST
 done
 
 echo "done."
