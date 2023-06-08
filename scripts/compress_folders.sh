@@ -94,9 +94,9 @@ o_files=( $(ls $ORIGIN) )
 for i in ${o_files[@]}
 do
     if [ ! -f "$COMPDIR/$i.7z" ]; then
-        7z a $COMPDIR/$i.7z $i
+        7z a $COMPDIR/$i.7z $ORIGIN/$i
     else
-        7z u $COMPDIR/$i.7z $i -uq0
+        7z u $COMPDIR/$i.7z $ORIGIN/$i -uq0
     fi
 done
 
