@@ -17,7 +17,7 @@ if ! command -v 7z > /dev/null; then
     exit 1
 fi
 
-COMPDIR=.compressed
+COMPDIR=".compressed"
 PROPOGATEDEL=0
 
 while getopts ':o:d:c:hp' OPTION; do
@@ -45,6 +45,8 @@ while getopts ':o:d:c:hp' OPTION; do
     esac
 done
 
+COMPDIR=$ORIGIN/$COMPDIR
+
 if [ -z "$ORIGIN" ] && [ -z "$DEST" ]; then
     echo "Missing origin (-o) and destination (-d)" >&2
     exit 1
@@ -67,6 +69,7 @@ if [ $PROPOGATEDEL == 1 ]; then
     d_files=( $(ls $COMPDIR) )
 
     # compare
+    echo ${d_files[@]}
     for d in ${d_files[@]}
     do
         found=0
@@ -87,7 +90,8 @@ if [ $PROPOGATEDEL == 1 ]; then
     done
 fi
 
-for i in $ORIGIN/*
+o_files=( $(ls $ORIGIN) )
+for i in ${o_files[@]}
 do
     if [ ! -f "$COMPDIR/$i.7z" ]; then
         7z a $COMPDIR/$i.7z $i

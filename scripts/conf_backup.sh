@@ -35,7 +35,6 @@ while getopts ':c:d:' OPTION; do
 done
 
 readarray -t CONF < $CONFFILE
-declare -a CONFLINES
 for l in ${CONF[@]}
 do
     opt=( $(grep -E '^([uc]) ([\w\/\.]+)' <<< l ) )
