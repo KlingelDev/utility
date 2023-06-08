@@ -80,7 +80,9 @@ if [ $PROPOGATEDEL == 1 ]; then
         if [ $found == 1 ]; then
             continue
         else
+            # TODO make this work for remote dest
             rm $COMPDIR/$d
+            rm $Dest/$d
         fi
     done
 fi
