@@ -108,9 +108,9 @@ fi
 for f in "${o_files[@]}"
 do
     if [ ! -f "$COMPDIR/$f.7z" ]; then
-        7z a "$COMPDIR/$f.7z" "$ORIGIN/$f" > /dev/null
+        7z a "$COMPDIR/$f.7z" "$ORIGIN/$f" | grep "ing archive"
     else
-        7z u "$COMPDIR/$f.7z" "$ORIGIN/$f" -uq0 > /dev/null
+        7z u "$COMPDIR/$f.7z" "$ORIGIN/$f" -uq0 | grep "ing archive"
     fi
 done
 
@@ -120,3 +120,4 @@ do
 done
 
 echo "done."
+exit 0
