@@ -42,6 +42,10 @@ while getopts ':o:d:c:hp' OPTION; do
             ;;
         *|h)
             echo "usage: $(basename \$0) [-o origin] [-c compressdir] [-h] [-p] [-d destination]" >&2
+            echo "-d -- destination"
+            echo "-h -- help"
+            echo "-o -- origin directory"
+            echo "-p -- propagate deletions"
             exit 1
             ;;
     esac
