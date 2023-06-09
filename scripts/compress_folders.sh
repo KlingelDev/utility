@@ -45,6 +45,9 @@ while getopts ':o:d:c:hp' OPTION; do
     esac
 done
 
+# TODO add dry/debug run
+# TODO remove last slash
+
 COMPDIR=$ORIGIN/$COMPDIR
 
 if [ -z "$ORIGIN" ] && [ -z "$DEST" ]; then
@@ -57,52 +60,67 @@ if [ ! -d $COMPDIR ]; then
     mkdir -p $COMPDIR;
 fi
 
+# TODO make this a function
+# Get file lists, deal with spaces
+# Origin folders/files
+readarray -t o_files < <(find $ORIGIN -maxdepth 1 -mindepth 1 -not -path "*/.*" -printf '%f\n')
+
+# Dest file list
+readarray -t d_files < <(find $DEST -maxdepth 1 -mindepth 1 -not -path "*/.*" -printf '%f\n')
+
+# NOTE appears not to be needed
+# escape file names
+# for i in ${!o_files[@]}
+# do
+#     o_files[$i]=$(printf '%s' "${o_files[$i]}" | sed -E 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;')
+# done
+# for i in ${!d_files[@]}
+# do
+#     d_files[$i]="$(printf '%s' "${d_files[$i]}" | sed -E 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;')"
+# done
+
 # Propagate deletions
 if [ $PROPOGATEDEL == 1 ]; then
-    # Build 7z file list
-    o_files=( $(ls $ORIGIN) )
-    for i in ${!o_files[@]}
-    do
-        o_files[$i]="${o_files[$i]}.7z"
-    done
-    # Dest file list
-    d_files=( $(ls $COMPDIR) )
-
-    # compare
-    echo ${d_files[@]}
-    for d in ${d_files[@]}
+    # compare DEST and ORIGIN, remove everything that is not in ORIGIN anymore
+    for i in ${!d_files[@]}
     do
         found=0
-        for o in ${o_files[@]}
+        for y in ${!o_files[@]}
         do
-            if [ $d == $o ]; then
+            if [[ "${d_files[$i]}" == "${o_files[$y]}.7z" ]]; then
                 found=1
                 break
             fi
         done
-        if [ $found == 1 ]; then
+        if [[ $found == 1 ]]; then
             continue
         else
             # TODO make this work for remote dest
-            rm $COMPDIR/$d
-            rm $Dest/$d
+            if [ -f "$COMPDIR/${d_files[$i]}" ]; then
+                echo "rm $COMPDIR/${d_files[$i]}"
+                rm "$COMPDIR/${d_files[$i]}"
+            fi
+            echo "rm $DEST/${d_files[$i]}"
+            rm "$DEST/${d_files[$i]}"
         fi
     done
 fi
 
-o_files=( $(ls $ORIGIN) )
-for i in ${o_files[@]}
+for f in "${o_files[@]}"
 do
-    if [ ! -f "$COMPDIR/$i.7z" ]; then
-        7z a $COMPDIR/$i.7z $ORIGIN/$i
+    if [ ! -f "$COMPDIR/$f.7z" ]; then
+        echo "7z a $COMPDIR/$f.7z $ORIGIN/$f"
+        7z a "$COMPDIR/$f.7z" "$ORIGIN/$f" > /dev/null
     else
-        7z u $COMPDIR/$i.7z $ORIGIN/$i -uq0
+        echo "7z u $COMPDIR/$f.7z $ORIGIN/$f -uq0"
+        7z u "$COMPDIR/$f.7z" "$ORIGIN/$f" -uq0 > /dev/null
     fi
 done
 
-for i in $COMPDIR/*
+for z in "${o_files[@]}"
 do
-    rsync -arptgoD --exclude $COMPDIR --progress --checksum $i $DEST
+    echo "rsync -arptgoD --progress --checksum $COMPDIR/$z.7z $DEST"
+    rsync -arptgoD --progress --checksum "$COMPDIR/$z.7z" $DEST
 done
 
 echo "done."
