@@ -5,6 +5,8 @@
 #
 # https://github.com/Klingel-Dev/utility/README.md
 # https://github.com/Klingel-Dev/utility/LICENCE
+#
+#set -x
 
 if ! command -v rsync > /dev/null; then
     echo "Depdency: rsync -- This script uses rsync to tranfer files to
@@ -45,7 +47,6 @@ while getopts ':o:d:c:hp' OPTION; do
     esac
 done
 
-# TODO add dry/debug run
 # TODO remove last slash
 
 COMPDIR=$ORIGIN/$COMPDIR
@@ -97,10 +98,8 @@ if [ $PROPOGATEDEL == 1 ]; then
         else
             # TODO make this work for remote dest
             if [ -f "$COMPDIR/${d_files[$i]}" ]; then
-                echo "rm $COMPDIR/${d_files[$i]}"
                 rm "$COMPDIR/${d_files[$i]}"
             fi
-            echo "rm $DEST/${d_files[$i]}"
             rm "$DEST/${d_files[$i]}"
         fi
     done
@@ -109,17 +108,14 @@ fi
 for f in "${o_files[@]}"
 do
     if [ ! -f "$COMPDIR/$f.7z" ]; then
-        echo "7z a $COMPDIR/$f.7z $ORIGIN/$f"
         7z a "$COMPDIR/$f.7z" "$ORIGIN/$f" > /dev/null
     else
-        echo "7z u $COMPDIR/$f.7z $ORIGIN/$f -uq0"
         7z u "$COMPDIR/$f.7z" "$ORIGIN/$f" -uq0 > /dev/null
     fi
 done
 
 for z in "${o_files[@]}"
 do
-    echo "rsync -arptgoD --progress --checksum $COMPDIR/$z.7z $DEST"
     rsync -arptgoD --progress --checksum "$COMPDIR/$z.7z" $DEST
 done
 
