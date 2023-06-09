@@ -120,7 +120,7 @@ done
 
 for z in "${o_files[@]}"
 do
-    rsync -arptgoD --progress --checksum "$COMPDIR/$z.7z" $DEST
+    rsync -arptgoD --no-times --progress --checksum "$COMPDIR/$z.7z" $DEST
 done
 
 echo "done."
