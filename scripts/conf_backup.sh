@@ -12,7 +12,7 @@ if ! command -v rsync > /dev/null; then
           target directory."
     exit 1
 fi
-
+cd $HOME
 CONFFILE=~/.conf_backup.conf
 
 while getopts ':c:d:' OPTION; do
@@ -34,17 +34,35 @@ while getopts ':c:d:' OPTION; do
     esac
 done
 
+if [ -z "$DEST" ]; then
+    echo "Missing destination (-d)" >&2
+    exit 1
+fi
+
+#DEST=$(printf "$DEST"; perl -pe 's!\/$!!')
+#echo $DEST
+
 readarray -t CONF < $CONFFILE
 for l in "${CONF[@]}"
 do
-    opt=( $(printf "$l" | perl -pe 's!^([uh]+) .*!$1!g'),
-          $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/]+)$!$1!g'),
-          $(printf "$l" | perl -pe 's!^.*\/\.*([\w\.]+)$!$1!g') )
+    if [[ $(printf "$l" | perl -ne 'print 1 if /^((u|h))\s.*$/') == '1' ]]; then
+        opt=( $(printf "$l" | perl -pe 's!^(u|h)\s.*!$1!g')
+              $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/]+)$!$1!g')
+              $(printf "$l" | perl -pe 's!.*\/\.*([\w\.]+)$!$1!g')
+              $(printf "$l" | perl -pe 's!^.*\/([\w\.]+)$!$1!g') )
 
-    echo ${opt[*]}
-    # if [ ${l[0]} == "u" ]; then
-    #     d=( $(sed '/\.*([\w\.]+)$//g$' <<< ${l[1]}) )
-    #     #rsync -arptgoD --progress --checksum  $DEST
-    # fi
+        rsync_opt="-arpgoD --no-times --progress --checksum"
+        o="${opt[1]/#~/$HOME}"
+        echo $o
+        if [ ${opt[0]} == "u" ]; then
+            echo One
+            echo "rsync $rsync_opt $o $DEST/${opt[2]}"
+            rsync $rsync_opt $o $DEST/${opt[2]}
+        else
+            echo Two
+            echo "rsync $rsync_opt ${opt[0]} $DEST/${opt[3]}"
+            rsync $rsync_opt ${opt[1]} $DEST/${opt[2]}
+        fi
+    fi
 done
 
