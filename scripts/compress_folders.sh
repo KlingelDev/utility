@@ -73,17 +73,6 @@ readarray -t o_files < <(find $ORIGIN -maxdepth 1 -mindepth 1 -not -path "*/.*" 
 # Dest file list
 readarray -t d_files < <(find $DEST -maxdepth 1 -mindepth 1 -not -path "*/.*" -printf '%f\n')
 
-# NOTE appears not to be needed
-# escape file names
-# for i in ${!o_files[@]}
-# do
-#     o_files[$i]=$(printf '%s' "${o_files[$i]}" | sed -E 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;')
-# done
-# for i in ${!d_files[@]}
-# do
-#     d_files[$i]="$(printf '%s' "${d_files[$i]}" | sed -E 's/[^a-zA-Z0-9,._+@%/-]/\\&/g;')"
-# done
-
 # Propagate deletions
 if [ $PROPOGATEDEL == 1 ]; then
     # compare DEST and ORIGIN, remove everything that is not in ORIGIN anymore

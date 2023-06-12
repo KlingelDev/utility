@@ -16,3 +16,14 @@ Compress folder contents and sync archives to (remote) destination (uses rsync a
 Backup conf file provided in cb.conf to destination. With options to unhide
 dirs.
 > usage: ./conf_backup.sh [-c conf] [-h] [-d DESTINATION]
+
+Default conf file will be created at ```~/.backup_config.conf```
+conf_backup.conf should look like this
+```u``` (unhide) or ```h``` (keep hidden) ```~/path/to/config``` (file or folder)
+
+>u ~/.vim
+>h /home/person/.mutt
+>u ~/.ssh
+>u ~/.mozilla
+
+Configs marked ```u``` will loose the dot for hiding in destination directory.

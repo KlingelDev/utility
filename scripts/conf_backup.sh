@@ -35,13 +35,16 @@ while getopts ':c:d:' OPTION; do
 done
 
 readarray -t CONF < $CONFFILE
-for l in ${CONF[@]}
+for l in "${CONF[@]}"
 do
-    opt=( $(grep -E '^([uc]) ([\w\/\.]+)' <<< l ) )
-    echo ${l[0]}, ${l[1]}
-    if [ ${l[0]} == "u" ]; then
-        d=( $(sed '/\.*([\w\.]+)$//g$' <<< ${l[1]}) )
-        #rsync -arptgoD --progress --checksum  $DEST
-    fi
+    opt=( $(printf "$l" | perl -pe 's!^([uh]+) .*!$1!g'),
+          $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/]+)$!$1!g'),
+          $(printf "$l" | perl -pe 's!^.*\/\.*([\w\.]+)$!$1!g') )
+
+    echo ${opt[*]}
+    # if [ ${l[0]} == "u" ]; then
+    #     d=( $(sed '/\.*([\w\.]+)$//g$' <<< ${l[1]}) )
+    #     #rsync -arptgoD --progress --checksum  $DEST
+    # fi
 done
 
