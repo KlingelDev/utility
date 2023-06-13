@@ -80,9 +80,9 @@ do
     # TODO make folder compression possible
     if [[ $(printf "$l" | perl -ne 'print 1 if /^((u|h))\s.*$/') == '1' ]]; then
         opt=( $(printf "$l" | perl -pe 's!^(u|h)\s.*!$1!g')
-              $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/]+)$!$1!g')
-              $(printf "$l" | perl -pe 's!.*\/\.*([\w\.]+)$!$1!g')
-              $(printf "$l" | perl -pe 's!^.*\/([\w\.]+)$!$1!g') )
+              $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/-]+)$!$1!g')
+              $(printf "$l" | perl -pe 's!.*\/\.*([\w\.-]+)$!$1!g')
+              $(printf "$l" | perl -pe 's!^.*\/([\w\.-]+)$!$1!g') )
 
         echo ${opt[*]}
         rsync_opt="-arpgoD --no-times --progress --checksum"
