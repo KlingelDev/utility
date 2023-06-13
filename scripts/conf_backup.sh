@@ -12,11 +12,15 @@ if ! command -v rsync > /dev/null; then
           target directory."
     exit 1
 fi
-cd $HOME
-CONFFILE=~/.conf_backup.conf
 
-while getopts ':c:d:' OPTION; do
+CONFFILE=~/.conf_backup.conf
+ORIGIN=$HOME
+
+while getopts ':c:d:o:' OPTION; do
     case $OPTION in
+        o)
+            ORIGIN=$OPTARG
+            ;;
         d)
             DEST=$OPTARG
             ;;
@@ -34,34 +38,64 @@ while getopts ':c:d:' OPTION; do
     esac
 done
 
+
+DEST=$(printf "$DEST" | perl -pe 's!\/$!!')
+KEEP_DEPTH=0
+
+readarray -t CONF < $CONFFILE
+# TODO Deal with spaces
+# Look for options
+for l in "${CONF[@]}"
+do
+    if [[ $(printf "$l" | perl -ne 'print 1 if /^((origin|dest|opt))\s.*$/') == '1' ]]; then
+        opt=( $(printf "$l" | perl -pe 's!^(origin|dest|opt)\s.*!$1!g')
+              $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/-]+)!$1!g') )
+
+        echo ${opt[*]}
+        if [[ "${opt[0]}" == "origin" ]]; then
+            ORIGIN="${opt[1]/#~/$HOME}"
+
+        elif [[ "${opt[0]}" == "dest" ]]; then
+            DEST="${opt[1]/#~/$HOME}"
+
+        elif [[ "${opt[0]}" == "opt" ]]; then
+            if [[ "${opt[1]}" == "keep_depth" ]]; then
+                KEEP_DEPTH=1
+            fi
+        fi
+    fi
+done
+
 if [ -z "$DEST" ]; then
     echo "Missing destination (-d)" >&2
     exit 1
 fi
 
-#DEST=$(printf "$DEST"; perl -pe 's!\/$!!')
-#echo $DEST
+echo "DEST", $DEST
+echo "ORIGIN", $ORIGIN
+echo "KEEP_DEPTH", $KEEP_DEPTH
 
-readarray -t CONF < $CONFFILE
 for l in "${CONF[@]}"
 do
+    # TODO make folder compression possible
     if [[ $(printf "$l" | perl -ne 'print 1 if /^((u|h))\s.*$/') == '1' ]]; then
         opt=( $(printf "$l" | perl -pe 's!^(u|h)\s.*!$1!g')
               $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/]+)$!$1!g')
               $(printf "$l" | perl -pe 's!.*\/\.*([\w\.]+)$!$1!g')
               $(printf "$l" | perl -pe 's!^.*\/([\w\.]+)$!$1!g') )
 
+        echo ${opt[*]}
         rsync_opt="-arpgoD --no-times --progress --checksum"
         o="${opt[1]/#~/$HOME}"
         echo $o
         if [ ${opt[0]} == "u" ]; then
             echo One
             echo "rsync $rsync_opt $o $DEST/${opt[2]}"
-            rsync $rsync_opt $o $DEST/${opt[2]}
+            #rsync $rsync_opt $o $DEST/${opt[2]}
         else
             echo Two
-            echo "rsync $rsync_opt ${opt[0]} $DEST/${opt[3]}"
-            rsync $rsync_opt ${opt[1]} $DEST/${opt[2]}
+            echo "rsync $rsync_opt $o $DEST/${opt[3]}"
+            #rsync $rsync_opt $o $DEST/${opt[2]}
         fi
     fi
 done
