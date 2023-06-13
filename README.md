@@ -25,8 +25,12 @@ conf_backup.conf should look like this
 `u` (unhide) or `h` (keep hidden) `~/path/to/config` (file or folder)
 
 ```
+# will become DEST/vim
 u ~/.vim
+
+# will become DEST/.mutt
 h /home/person/.mutt
+
 u ~/.ssh
 u ~/.mozilla
 ```
