@@ -17,7 +17,7 @@ usage: ./compress_folders.sh [-o DIR] [-p] [-c compressdir] [-h] [-d DESTINATION
 Backup conf file provided in cb.conf to destination. With options to unhide
 dirs.
 ```
-usage: ./conf_backup.sh [-c conf] [-h] [-d DESTINATION]
+usage: ./conf_backup.sh [-o origin] [-c conf] [-h] [-d DESTINATION]
 ```
 
 Default conf file will be created at `~/.backup_config.conf`

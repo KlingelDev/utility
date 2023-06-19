@@ -33,7 +33,7 @@ while getopts ':c:d:o:' OPTION; do
             exit 1
             ;;
         *|h)
-            echo "usage: $(basename \$0) [-c config] [-h] [-d destination]" >&2
+            echo "usage: $(basename \$0) [-o origin] [-c config] [-h] [-d destination]" >&2
             exit 1
             ;;
     esac
