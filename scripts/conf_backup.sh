@@ -1,11 +1,12 @@
 #!/bin/bash
-# Depends on rsync
+# Depends on rsync, perl
 #
 # backup conf files provided in cb.conf to destination
 #
 # https://github.com/Klingel-Dev/utility/README.md
 # https://github.com/Klingel-Dev/utility/LICENCE
 #
+#-x
 
 if ! command -v rsync > /dev/null; then
     echo "Depdency: rsync -- This script uses rsync to tranfer files to
@@ -78,23 +79,38 @@ echo "KEEP_DEPTH", $KEEP_DEPTH
 for l in "${CONF[@]}"
 do
     # TODO make folder compression possible
+    # TODO make encryption possible
     if [[ $(printf "$l" | perl -ne 'print 1 if /^((u|h))\s.*$/') == '1' ]]; then
-        opt=( $(printf "$l" | perl -pe 's!^(u|h)\s.*!$1!g')
-              $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/-]+)$!$1!g')
-              $(printf "$l" | perl -pe 's!.*\/\.*([\w\.-]+)$!$1!g')
-              $(printf "$l" | perl -pe 's!^.*\/([\w\.-]+)$!$1!g') )
+    opt=( $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$1!g') # Flag
+          $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$2!g') # Path
+          $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$3!g') # Folder name
+          $(printf "$l" | perl -pe 's!^\s*\w+\s([\/~\w\.\-]+)$!$1!g') ) # Full Path
 
+        #TODO add KEEP_DEPTH
         echo ${opt[*]}
         rsync_opt="-arpgoD --no-times --progress --checksum"
-        o="${opt[1]/#~/$HOME}"
+        o="${opt[3]/#~/$HOME}"
+
         echo $o
         if [ ${opt[0]} == "u" ]; then
             echo One
-            echo "rsync $rsync_opt $o $DEST/${opt[2]}"
-            #rsync $rsync_opt $o $DEST/${opt[2]}
+            if [[ $KEEP_DEPTH == 1 ]]; then
+                n=""
+                d="${opt[1]/#~/$HOME}"
+                n=$(echo $d | sed "s=$ORIGIN\/*==g")
+                if [[ "$n" != "" ]]; then
+                    n="$n/"
+                    n=$(echo $n | sed "s=^\.==g")
+                fi
+                echo $n
+                #echo "replace ${d/$ORIGIN\//$n}"
+                echo "rsync $rsync_opt $o $DEST/$n${opt[2]}"
+            else
+                echo "rsync $rsync_opt $o $DEST/${opt[2]}"
+            fi
         else
             echo Two
-            echo "rsync $rsync_opt $o $DEST/${opt[3]}"
+            #echo "rsync $rsync_opt $o $DEST/${opt[2]}"
             #rsync $rsync_opt $o $DEST/${opt[2]}
         fi
     fi

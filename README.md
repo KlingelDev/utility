@@ -25,6 +25,11 @@ conf_backup.conf should look like this
 `u` (unhide) or `h` (keep hidden) `~/path/to/config` (file or folder)
 
 ```
+# Options
+origin ~
+dest ~/Backup/Config
+opt keep_depth
+
 # will become DEST/vim
 u ~/.vim
 
