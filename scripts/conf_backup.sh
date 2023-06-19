@@ -78,6 +78,7 @@ echo "KEEP_DEPTH", $KEEP_DEPTH
 
 for l in "${CONF[@]}"
 do
+    # TODO make it an option to work without flags
     # TODO make folder compression possible
     # TODO make encryption possible
     if [[ $(printf "$l" | perl -ne 'print 1 if /^((u|h))\s.*$/') == '1' ]]; then
@@ -86,8 +87,7 @@ do
           $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}([\w\.\-]+)$!$3!g') # Folder name
           $(printf "$l" | perl -pe 's!^\s*\w+\s([\/~\w\.\-]+)$!$1!g') ) # Full Path
 
-        echo ${opt[*]}
-        rsync_opt="-arpgoD --no-times --progress --checksum"
+        rsync_opt="-arpgoD --no-times --checksum"
         o="${opt[3]/#~/$HOME}"
 
         flags=${opt[0]}
@@ -105,13 +105,22 @@ do
         fi
 
         if [[ $KEEP_DEPTH == 1 ]]; then
-            echo "rsync $rsync_opt $o $DEST/$n$t"
+            if [ ! -d "$DEST/$n" ]; then
+                echo "Creating $DEST/$n"
+                mkdir -p $DEST/$n;
+            fi
             fdest="$DEST/$n$t"
         else
-            echo "rsync $rsync_opt $o $DEST/$t"
             fdest="$DEST/$t"
         fi
+
+        echo "rsync $rsync_opt $o $fdest"
+        rsync $rsync_opt $o $fdest
 
     fi
 done
 
+# TODO make the whole process reverseable
+
+echo "done."
+exit 0
