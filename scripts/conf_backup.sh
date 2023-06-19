@@ -83,36 +83,35 @@ do
     if [[ $(printf "$l" | perl -ne 'print 1 if /^((u|h))\s.*$/') == '1' ]]; then
     opt=( $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$1!g') # Flag
           $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$2!g') # Path
-          $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$3!g') # Folder name
+          $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}([\w\.\-]+)$!$3!g') # Folder name
           $(printf "$l" | perl -pe 's!^\s*\w+\s([\/~\w\.\-]+)$!$1!g') ) # Full Path
 
-        #TODO add KEEP_DEPTH
         echo ${opt[*]}
         rsync_opt="-arpgoD --no-times --progress --checksum"
         o="${opt[3]/#~/$HOME}"
 
-        echo $o
-        if [ ${opt[0]} == "u" ]; then
-            echo One
-            if [[ $KEEP_DEPTH == 1 ]]; then
-                n=""
-                d="${opt[1]/#~/$HOME}"
-                n=$(echo $d | sed "s=$ORIGIN\/*==g")
-                if [[ "$n" != "" ]]; then
-                    n="$n/"
-                    n=$(echo $n | sed "s=^\.==g")
-                fi
-                echo $n
-                #echo "replace ${d/$ORIGIN\//$n}"
-                echo "rsync $rsync_opt $o $DEST/$n${opt[2]}"
-            else
-                echo "rsync $rsync_opt $o $DEST/${opt[2]}"
-            fi
-        else
-            echo Two
-            #echo "rsync $rsync_opt $o $DEST/${opt[2]}"
-            #rsync $rsync_opt $o $DEST/${opt[2]}
+        flags=${opt[0]}
+        t=${opt[2]}
+        d="${opt[1]/#~/$HOME}"
+        n=$(echo $d | sed "s=$ORIGIN\/*==g")
+        if [[ "$n" != "" ]]; then
+            n="$n/"
         fi
+
+        # Remove leading dots, unhide
+        if [[ $(printf "$flags" | perl -ne 'print 1 if /u/g') == '1' ]]; then
+            n=$(echo $n | sed "s=^\.==g")
+            t=$(echo $t | sed "s=^\.==g")
+        fi
+
+        if [[ $KEEP_DEPTH == 1 ]]; then
+            echo "rsync $rsync_opt $o $DEST/$n$t"
+            fdest="$DEST/$n$t"
+        else
+            echo "rsync $rsync_opt $o $DEST/$t"
+            fdest="$DEST/$t"
+        fi
+
     fi
 done
 
