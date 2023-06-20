@@ -1,5 +1,5 @@
 #!/bin/bash
-# Depends on rsync, perl
+# Depends on rsync, perl, 7z
 #
 # backup conf files provided in cb.conf to destination
 #
@@ -16,14 +16,18 @@ fi
 
 CONFFILE=~/.conf_backup.conf
 ORIGIN=$HOME
+COMPDIR=$ORIGIN/.conf_backup/compdir
 
-while getopts ':c:d:o:' OPTION; do
+while getopts ':c:d:o:k:' OPTION; do
     case $OPTION in
         o)
             ORIGIN=$OPTARG
             ;;
         d)
             DEST=$OPTARG
+            ;;
+        k)
+            COMPDIR=$OPTARG
             ;;
         c)
             CONFFILE=$OPTARG
@@ -33,7 +37,7 @@ while getopts ':c:d:o:' OPTION; do
             exit 1
             ;;
         *|h)
-            echo "usage: $(basename \$0) [-o origin] [-c config] [-h] [-d destination]" >&2
+            echo "usage: $(basename \$0) [-o origin] [-c config] [-h] [-k compress folder][-d destination]" >&2
             exit 1
             ;;
     esac
@@ -45,11 +49,12 @@ KEEP_DEPTH=0
 
 readarray -t CONF < $CONFFILE
 # TODO Deal with spaces
+
 # Look for options
 for l in "${CONF[@]}"
 do
-    if [[ $(printf "$l" | perl -ne 'print 1 if /^((origin|dest|opt))\s.*$/') == '1' ]]; then
-        opt=( $(printf "$l" | perl -pe 's!^(origin|dest|opt)\s.*!$1!g')
+    if [[ $(printf "$l" | perl -ne 'print 1 if /^((origin|dest|opt|compdir))\s.*$/') == '1' ]]; then
+        opt=( $(printf "$l" | perl -pe 's!^(origin|dest|opt|compdir)\s.*!$1!g')
               $(printf "$l" | perl -pe 's!^\w*\s([\w\~\.\/-]+)!$1!g') )
 
         echo ${opt[*]}
@@ -58,6 +63,9 @@ do
 
         elif [[ "${opt[0]}" == "dest" ]]; then
             DEST="${opt[1]/#~/$HOME}"
+
+        elif [[ "${opt[0]}" == "compdir" ]]; then
+            COMPDIR="${opt[1]/#~/$HOME}"
 
         elif [[ "${opt[0]}" == "opt" ]]; then
             if [[ "${opt[1]}" == "keep_depth" ]]; then
@@ -79,9 +87,8 @@ echo "KEEP_DEPTH", $KEEP_DEPTH
 for l in "${CONF[@]}"
 do
     # TODO make it an option to work without flags
-    # TODO make folder compression possible
     # TODO make encryption possible
-    if [[ $(printf "$l" | perl -ne 'print 1 if /^((u|h))\s.*$/') == '1' ]]; then
+    if [[ $(printf "$l" | perl -ne 'print 1 if /^([uhce]+)\s.*$/') == '1' ]]; then
     opt=( $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$1!g') # Flag
           $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}\.*([\w\.\-]+)$!$2!g') # Path
           $(printf "$l" | perl -pe 's!^\s*(\w+)(.*)\/{1}([\w\.\-]+)$!$3!g') # Folder name
@@ -91,6 +98,7 @@ do
         o="${opt[3]/#~/$HOME}"
 
         flags=${opt[0]}
+
         t=${opt[2]}
         d="${opt[1]/#~/$HOME}"
         n=$(echo $d | sed "s=$ORIGIN\/*==g")
@@ -114,13 +122,31 @@ do
             fdest="$DEST/$t"
         fi
 
+        # Compress
+        if [[ $(printf "$flags" | perl -ne 'print 1 if /c/g') == '1' ]]; then
+            if [ ! -d "$COMPDIR" ]; then
+                echo "Creating $COMPDIR"
+                mkdir -p $COMPDIR;
+            fi
+
+            cfile=$"$COMPDIR/$t.7z"
+
+            if [ ! -f "$cfile" ]; then
+                7z a "$cfile" "$o" | grep "ing archive"
+            else
+                7z u "$cfile" "$o" -uq0 | grep "ing archive"
+            fi
+
+            o="$cfile"
+            fdest=$DEST
+        fi
         echo "rsync $rsync_opt $o $fdest"
         rsync $rsync_opt $o $fdest
 
     fi
 done
 
-# TODO make the whole process reverseable
+# TODO make the whole process reversible
 
 echo "done."
 exit 0
